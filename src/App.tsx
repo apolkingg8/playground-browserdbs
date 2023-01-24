@@ -172,7 +172,7 @@ function App() {
                     setDbState('ok')
                 }}
             >
-                Get 10k items by key with Dexie (bulk get)
+                Get 10k items by id with Dexie (bulk get)
             </button>
             <button
                 onClick={async ()=> {
@@ -192,7 +192,29 @@ function App() {
                     setDbState('ok')
                 }}
             >
-                Get 10k items by key with Dexie (get * 10k)
+                Get 10k items by id with Dexie (get * 10k)
+            </button>
+            <button
+                onClick={async ()=> {
+                    setDbState('busy')
+                    await nukeDb()
+                    const dexieDb = new MySubClassedDexie()
+                    const dumbArr = generateDumbArr()
+                    await dexieDb.dumbConfigTable.bulkAdd(dumbArr)
+
+                    const st = Date.now()
+                    for(let i=0; i<dumbArr.length; i++) {
+                        await dexieDb.dumbConfigTable.get({
+                            prop1: dumbArr[i].prop1,
+                        })
+                    }
+                    setCostTime(Date.now() - st)
+
+                    dexieDb.close()
+                    setDbState('ok')
+                }}
+            >
+                Get 10k items by indexed prop with Dexie (get * 10k)
             </button>
             <button
                 onClick={async ()=> {
