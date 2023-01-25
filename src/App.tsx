@@ -12,10 +12,10 @@ const nukeDb = async ()=> {
     dbs.forEach(db => { window.indexedDB.deleteDatabase(db.name || '') })
 }
 
-const generateDumbArr = (): DumbConfig[] => {
+const generateDumbArr = (count: number = 10 * 1000): DumbConfig[] => {
     const dumbArr: DumbConfig[] = []
 
-    for(let i=0; i<10*1000; i++) {
+    for(let i=0; i<count; i++) {
         const dumb = new DumbConfig({})
         dumbArr.push(dumb)
     }
@@ -465,20 +465,20 @@ function App() {
                     >
                         Get 10k items by id with PouchDB (bulk get)
                     </button>
-                    {/* https://github.com/pouchdb/pouchdb/issues/8053 */}
                     <button
-                        disabled={true}
                         onClick={async ()=> {
                             setIsDbBusy(true)
                             await nukeDb()
                             const pouchDb = new PouchDB('myPouchDb', {adapter: 'indexeddb'})
-                            const dumbArr = generateDumbArr()
-                            await pouchDb.bulkDocs(dumbArr)
+                            // error here
                             await pouchDb.createIndex({
                                 index: {
                                     fields: ['prop1']
                                 }
                             })
+
+                            const dumbArr = generateDumbArr()
+                            await pouchDb.bulkDocs(dumbArr)
 
                             const st = Date.now()
                             for(let i=0; i<dumbArr.length; i++) {
@@ -495,7 +495,57 @@ function App() {
                             setIsDbBusy(false)
                         }}
                     >
-                        Query 10k items by indexed prop with PouchDB (find * 10k)
+                        Query 10k items by indexed prop with PouchDB (find * 10k) [WITH ERROR]
+                    </button>
+                    <button
+                        onClick={async ()=> {
+                            setIsDbBusy(true)
+                            await nukeDb()
+                            const pouchDb = new PouchDB('myPouchDb', {adapter: 'indexeddb'})
+                            const dumbArr = generateDumbArr(100)
+                            await pouchDb.bulkDocs(dumbArr)
+
+                            const st = Date.now()
+                            for(let i=0; i<dumbArr.length; i++) {
+                                const index = Math.floor(Math.random() * dumbArr.length)
+                                await pouchDb.find({
+                                    selector: {
+                                        prop2: dumbArr[index].prop2,
+                                    }
+                                })
+                            }
+                            setCostTime(Date.now() - st)
+
+                            await pouchDb.close()
+                            setIsDbBusy(false)
+                        }}
+                    >
+                        Query 0.1k items by non-indexed prop with PouchDB (find * 10k)
+                    </button>
+                    <button
+                        onClick={async ()=> {
+                            setIsDbBusy(true)
+                            await nukeDb()
+                            const pouchDb = new PouchDB('myPouchDb', {adapter: 'indexeddb'})
+                            const dumbArr = generateDumbArr(1000)
+                            await pouchDb.bulkDocs(dumbArr)
+
+                            const st = Date.now()
+                            for(let i=0; i<dumbArr.length; i++) {
+                                const index = Math.floor(Math.random() * dumbArr.length)
+                                await pouchDb.find({
+                                    selector: {
+                                        prop2: dumbArr[index].prop2,
+                                    }
+                                })
+                            }
+                            setCostTime(Date.now() - st)
+
+                            await pouchDb.close()
+                            setIsDbBusy(false)
+                        }}
+                    >
+                        Query 1k items by non-indexed prop with PouchDB (find * 10k)
                     </button>
                     <button
                         onClick={async ()=> {
